@@ -155,6 +155,14 @@ export function handleRightClick(
     cell: MinesWeeperCell,
     game: MinesWeeperGame
 ): MinesWeeperGame {
+    game.board[cell.row][cell.column].isFlagged = !cell.isFlagged
+    return game
+}
+
+export function handleCellClick(
+    cell: MinesWeeperCell,
+    game: MinesWeeperGame
+): MinesWeeperGame {
     return discoverCells(cell, game)
 }
 

@@ -1,5 +1,6 @@
 import {
-    rightClickCell,
+    clickCell,
+    rightCellClick,
     selectGame,
     setVoidBoard,
     startGame,
@@ -26,7 +27,13 @@ export default function MinesWeeper() {
             dispatch(startGame({ cellClicked, config: gameConfig }))
         }
 
-        dispatch(rightClickCell(cellClicked))
+        dispatch(clickCell(cellClicked))
+    }
+
+    const onRightClick = (cellClicked: MinesWeeperCell) => {
+        if (!game.isGenerated) return
+
+        dispatch(rightCellClick(cellClicked))
     }
 
     useEffect(() => {
@@ -43,6 +50,7 @@ export default function MinesWeeper() {
                                 key={`${rowIndex}-${cellIndex}`}
                                 cell={cellValue}
                                 onCellClick={onCellClick}
+                                onRightClick={onRightClick}
                             />
                         ))}
                     </Stack>
