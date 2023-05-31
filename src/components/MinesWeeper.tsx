@@ -1,17 +1,33 @@
-import { BoardUpdater, MinesWeeperBoard } from '@/interfaces/minesweeper'
+import { selectGame, setVoidBoard, startGame } from '@/state/slices/game.slice'
+import { useAppDispatch, useAppSelector } from '@/state/hooks'
 
 import Cell from './Cell'
+import { MinesWeeperCell } from '@/interfaces/minesweeper'
 import Stack from '@mui/material/Stack'
+import { selectConfiguration } from '@/state/slices/configuration.slice'
+import { useEffect } from 'react'
 
-interface MinesWeeperProps {
-    board: MinesWeeperBoard
-    onCellClick: BoardUpdater
-}
+export default function MinesWeeper() {
+    const gameConfig = useAppSelector(selectConfiguration)
+    const game = useAppSelector(selectGame)
+    const dispatch = useAppDispatch()
 
-export default function MinesWeeper({ board, onCellClick }: MinesWeeperProps) {
+    useEffect(() => {
+        dispatch(setVoidBoard(gameConfig))
+    }, [gameConfig, dispatch])
+
+    const onCellClick = (cellClicked: MinesWeeperCell) => {
+        if (game.isGenerated) {
+        } else dispatch(startGame({ cellClicked, config: gameConfig }))
+    }
+
+    useEffect(() => {
+        console.log('gaaameee: ', game)
+    }, [game])
+
     return (
         <Stack>
-            {board.map((row, rowIndex) => {
+            {game.board.map((row, rowIndex) => {
                 return (
                     <Stack direction="row" key={rowIndex}>
                         {row.map((cellValue, cellIndex) => (
