@@ -1,52 +1,72 @@
 import {
-    MinesWeeperBoard,
     MinesWeeperCell,
+    MinesWeeperGame,
     MinesweeperConfig,
 } from '@/interfaces/minesweeper'
 
-export function generateVoidBoard({
+const cellsArround = [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+] as const
+
+export function generateVoidGame({
     columns,
     rows,
-}: Pick<MinesweeperConfig, 'columns' | 'rows'>): MinesWeeperBoard {
-    return Array(rows)
-        .fill(0)
-        .map((v, row): MinesWeeperCell[] =>
-            Array(columns)
-                .fill(0)
-                .map((c, column) => ({
-                    isFlagged: false,
-                    isRevealed: false,
-                    value: 0,
-                    row,
-                    column,
-                }))
-        )
+}: Pick<MinesweeperConfig, 'columns' | 'rows'>): MinesWeeperGame {
+    return {
+        isGameOver: false,
+        isGameWon: false,
+        isGenerated: false,
+        board: Array(rows)
+            .fill(0)
+            .map((v, row): MinesWeeperCell[] =>
+                Array(columns)
+                    .fill(0)
+                    .map((c, column) => ({
+                        isFlagged: false,
+                        isRevealed: false,
+                        value: 0,
+                        row,
+                        column,
+                    }))
+            ),
+    }
 }
 
-export function generateBoard(
+function fillMinesInBoard(
+    board: MinesWeeperCell[][],
     cellClicked: MinesWeeperCell,
     { columns, rows, mines }: MinesweeperConfig
-): MinesWeeperBoard {
-    const board = generateVoidBoard({ columns, rows })
-    board[cellClicked.row][cellClicked.column].isRevealed = true
-    const minesPosiblePositions = Array(rows * columns).fill(0)
+): MinesWeeperCell[][] {
+    const minesPossiblePositions = generateMinesPossiblePositions(cellClicked, {
+        columns,
+        rows,
+    })
 
     for (let index = 0; index < mines; index++) {
         const randomPosition = Math.floor(
-            Math.random() * minesPosiblePositions.length
+            Math.random() * minesPossiblePositions.length
         )
-        minesPosiblePositions.splice(randomPosition, 1)
-        const rowIndex = Math.floor(randomPosition / columns)
-        const columnIndex = randomPosition % columns
-        board[rowIndex][columnIndex] = {
-            value: -1,
-            isRevealed: false,
-            isFlagged: false,
-            row: rowIndex,
-            column: columnIndex,
-        }
+        const cell = minesPossiblePositions[randomPosition]
+        minesPossiblePositions.splice(randomPosition, 1)
+        const rowIndex = Math.floor(cell / columns)
+        const columnIndex = cell % columns
+        board[rowIndex][columnIndex].value = -1
     }
 
+    return board
+}
+
+function fillNumbersInBoard(
+    board: MinesWeeperCell[][],
+    { columns, rows, mines }: MinesweeperConfig
+): MinesWeeperCell[][] {
     for (let index = 0; index < rows * columns; index++) {
         const rowIndex = Math.floor(index / columns)
         const columnIndex = index % columns
@@ -54,40 +74,79 @@ export function generateBoard(
             continue
         }
         const cell = board[rowIndex][columnIndex]
-        const cellsArround = cellsArroundCell(cell, board)
-        cell.value = cellsArround.filter(({ value }) => value === -1).length
+        const cellsArroundCell = getCellsArroundCell(cell, board)
+        cell.value = cellsArroundCell.filter(({ value }) => value === -1).length
     }
-
     return board
 }
 
-function cellsArroundCell(
+export function fillBoard(
+    cellClicked: MinesWeeperCell,
+    config: MinesweeperConfig
+): MinesWeeperGame {
+    const game = generateVoidGame({
+        columns: config.columns,
+        rows: config.rows,
+    })
+    game.isGenerated = true
+
+    game.board = fillMinesInBoard(game.board, cellClicked, config)
+    game.board = fillNumbersInBoard(game.board, config)
+
+    return game
+}
+
+function generateMinesPossiblePositions(
     cell: MinesWeeperCell,
-    board: MinesWeeperBoard
+    { columns, rows }: Pick<MinesweeperConfig, 'columns' | 'rows'>
+) {
+    const minesPossiblePositions = Array(rows * columns)
+        .fill(0)
+        .map((_, i) => i)
+
+    const cellPosition = cell.row * columns + cell.column
+
+    const noMinesPositions = getPositionsArroundCell(cell, {
+        rows,
+        columns,
+    }).map(([rowIndex, columnIndex]) => rowIndex * columns + columnIndex)
+    noMinesPositions.push(cellPosition)
+
+    return minesPossiblePositions.filter(
+        (value) => !noMinesPositions.includes(value)
+    )
+}
+
+function getPositionsArroundCell(
+    cell: Pick<MinesWeeperCell, 'column' | 'row'>,
+    { rows, columns }: Pick<MinesweeperConfig, 'columns' | 'rows'>
+): [number, number][] {
+    return cellsArround.reduce((positionsArround, [row, column]) => {
+        const rowIndex = cell.row + row
+        const columnIndex = cell.column + column
+
+        const isCellValid =
+            isRowValid(rowIndex, rows) && isColumnValid(columnIndex, columns)
+        if (isCellValid) positionsArround.push([rowIndex, columnIndex])
+
+        return positionsArround
+    }, [] as [number, number][])
+}
+
+function getCellsArroundCell(
+    cell: MinesWeeperCell,
+    board: MinesWeeperGame['board']
 ): MinesWeeperCell[] {
-    const cellsArround: MinesWeeperCell[] = []
-
-    for (let row = -1; row < 2; row++) {
-        for (let column = -1; column < 2; column++) {
-            if (row === 0 && column === 0) continue
-            const rowIndex = cell.row + row
-            const columnIndex = cell.column + column
-
-            const isCellValid =
-                isRowValid(rowIndex, board) && isColumnValid(columnIndex, board)
-            if (!isCellValid) continue
-
-            cellsArround.push(board[rowIndex][columnIndex])
-        }
-    }
-
-    return cellsArround
+    return getPositionsArroundCell(cell, {
+        rows: board.length,
+        columns: board[0].length,
+    }).map(([rowIndex, columnIndex]) => board[rowIndex][columnIndex])
 }
 
-function isRowValid(row: number, board: MinesWeeperBoard) {
-    return row >= 0 && row < board.length
+function isRowValid(row: number, totalRows: number): boolean {
+    return row >= 0 && row < totalRows
 }
 
-function isColumnValid(column: number, board: MinesWeeperBoard) {
-    return column >= 0 && column < board[0].length
+function isColumnValid(column: number, totalColumns: number): boolean {
+    return column >= 0 && column < totalColumns
 }

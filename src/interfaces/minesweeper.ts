@@ -11,5 +11,12 @@ export interface MinesWeeperCell {
     row: number
     column: number
 }
-export type MinesWeeperBoard = MinesWeeperCell[][]
+
+export interface MinesWeeperGame {
+    isGameOver: boolean
+    isGameWon: boolean
+    isGenerated: boolean
+    board: MinesWeeperCell[][]
+}
+
 export type BoardUpdater = (cellClicked: MinesWeeperCell) => void
