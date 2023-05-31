@@ -4,7 +4,11 @@ import {
     MinesweeperConfig,
 } from '@/interfaces/minesweeper'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
-import { fillBoard, generateVoidGame } from '@/factories/minesweeper.factory'
+import {
+    fillBoard,
+    generateVoidGame,
+    handleRightClick,
+} from '@/factories/minesweeper.factory'
 
 import { RootState } from '../store'
 
@@ -24,9 +28,7 @@ export const gameSlice = createSlice({
             {
                 payload,
             }: PayloadAction<Pick<MinesweeperConfig, 'columns' | 'rows'>>
-        ) => {
-            return generateVoidGame(payload)
-        },
+        ) => generateVoidGame(payload),
         startGame: (
             state,
             {
@@ -35,12 +37,12 @@ export const gameSlice = createSlice({
                 cellClicked: MinesWeeperCell
                 config: MinesweeperConfig
             }>
-        ) => {
-            return fillBoard(payload.cellClicked, payload.config)
-        },
+        ) => fillBoard(payload.cellClicked, payload.config),
+        rightClickCell: (state, { payload }: PayloadAction<MinesWeeperCell>) =>
+            handleRightClick(payload, state),
     },
 })
 
-export const { setVoidBoard, startGame } = gameSlice.actions
+export const { setVoidBoard, startGame, rightClickCell } = gameSlice.actions
 export const selectGame = (state: RootState) => state.game
 export default gameSlice.reducer

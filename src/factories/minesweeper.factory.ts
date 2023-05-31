@@ -150,3 +150,40 @@ function isRowValid(row: number, totalRows: number): boolean {
 function isColumnValid(column: number, totalColumns: number): boolean {
     return column >= 0 && column < totalColumns
 }
+
+export function handleRightClick(
+    cell: MinesWeeperCell,
+    game: MinesWeeperGame
+): MinesWeeperGame {
+    return discoverCells(cell, game)
+}
+
+export function discoverCells(
+    cell: MinesWeeperCell,
+    game: MinesWeeperGame
+): MinesWeeperGame {
+    game.board[cell.row][cell.column].isRevealed = true
+    if (cell.value !== 0) return game
+
+    const cellsToDiscoverArround: MinesWeeperCell[] = [cell]
+    const cellsDiscoverdArround: string[] = []
+    while (cellsToDiscoverArround.length) {
+        const cellToDiscover = cellsToDiscoverArround.shift()
+        const cellKey = `${cellToDiscover?.row}-${cellToDiscover?.column}`
+        if (!cellToDiscover || cellsDiscoverdArround.includes(cellKey)) continue
+        cellsDiscoverdArround.push(cellKey)
+
+        const cellsArroundCellToDiscover = getCellsArroundCell(
+            cellToDiscover,
+            game.board
+        )
+        cellsArroundCellToDiscover.forEach((cellArround) => {
+            cellArround.isRevealed = true
+            if (cellArround.value === 0) {
+                cellsToDiscoverArround.push(cellArround)
+            }
+        })
+    }
+
+    return game
+}

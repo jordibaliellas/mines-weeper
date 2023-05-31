@@ -1,4 +1,9 @@
-import { selectGame, setVoidBoard, startGame } from '@/state/slices/game.slice'
+import {
+    rightClickCell,
+    selectGame,
+    setVoidBoard,
+    startGame,
+} from '@/state/slices/game.slice'
 import { useAppDispatch, useAppSelector } from '@/state/hooks'
 
 import Cell from './Cell'
@@ -17,8 +22,11 @@ export default function MinesWeeper() {
     }, [gameConfig, dispatch])
 
     const onCellClick = (cellClicked: MinesWeeperCell) => {
-        if (game.isGenerated) {
-        } else dispatch(startGame({ cellClicked, config: gameConfig }))
+        if (!game.isGenerated) {
+            dispatch(startGame({ cellClicked, config: gameConfig }))
+        }
+
+        dispatch(rightClickCell(cellClicked))
     }
 
     useEffect(() => {
