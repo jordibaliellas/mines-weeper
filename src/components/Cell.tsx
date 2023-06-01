@@ -1,9 +1,14 @@
-import { BoardUpdater, MinesWeeperCell } from '@/interfaces/minesweeper'
+import {
+    BoardUpdater,
+    MinesWeeperCell,
+    MinesWeeperGame,
+} from '@/interfaces/minesweeper'
 
 import Button from '@mui/material/Button'
 
 interface CellProps {
     cell: MinesWeeperCell
+    game: MinesWeeperGame
     onCellClick: BoardUpdater
     onRightClick: BoardUpdater
 }
@@ -31,8 +36,9 @@ function Content({ cell }: { cell: MinesWeeperCell }) {
     }
 
     if (value === 0) return null
-    if (value !== -1)
+    if (value !== -1) {
         return <span style={{ color: numberColors[value - 1] }}>{value}</span>
+    }
 
     return (
         <span role="img" aria-label="mine">
@@ -41,16 +47,34 @@ function Content({ cell }: { cell: MinesWeeperCell }) {
     )
 }
 
-export default function Cell({ cell, onCellClick, onRightClick }: CellProps) {
+export default function Cell({
+    cell,
+    game,
+    onCellClick,
+    onRightClick,
+}: CellProps) {
     const { isRevealed } = cell
 
-    const preventDefaultWrapper = (fn: () => void) => (e: React.MouseEvent) => {
+    const clickWrapper = (fn: () => void) => (e: React.MouseEvent) => {
         e.preventDefault()
+        if (game.isGameOver || game.isGameWon || cell.isRevealed) return
         fn()
     }
 
-    const onLeftClick = preventDefaultWrapper(() => onCellClick(cell))
-    const onContextMenu = preventDefaultWrapper(() => onRightClick(cell))
+    const onLeftClick = clickWrapper(() => {
+        onCellClick(cell)
+    })
+    const onContextMenu = clickWrapper(() => {
+        onRightClick(cell)
+    })
+
+    const isCellError = isRevealed && game.isGameOver && cell.value === -1
+
+    const backgroundColor = isCellError
+        ? '#ff0000'
+        : isRevealed
+        ? '#c4c4c4'
+        : 'white'
 
     return (
         <Button
@@ -61,14 +85,13 @@ export default function Cell({ cell, onCellClick, onRightClick }: CellProps) {
                 fontSize: '12px',
                 fontWeight: 'bold',
                 minWidth: 'unset',
-                backgroundColor: isRevealed ? '#c4c4c4' : 'white',
+                backgroundColor,
                 '&:hover': {
-                    backgroundColor: isRevealed ? '#c4c4c4' : 'white',
+                    backgroundColor,
                 },
             }}
             variant="outlined"
             color="primary"
-            disabled={isRevealed}
             onClick={onLeftClick}
             onContextMenu={onContextMenu}
         >

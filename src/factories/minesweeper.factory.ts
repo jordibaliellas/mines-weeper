@@ -163,32 +163,40 @@ export function handleCellClick(
     cell: MinesWeeperCell,
     game: MinesWeeperGame
 ): MinesWeeperGame {
-    return discoverCells(cell, game)
+    if (cell.isRevealed || cell.isFlagged) return game
+
+    game.board[cell.row][cell.column].isRevealed = true
+
+    if (cell.value === -1) {
+        game.isGameOver = true
+        return game
+    }
+
+    return revealCells(cell, game)
 }
 
-export function discoverCells(
+export function revealCells(
     cell: MinesWeeperCell,
     game: MinesWeeperGame
 ): MinesWeeperGame {
-    game.board[cell.row][cell.column].isRevealed = true
     if (cell.value !== 0) return game
 
-    const cellsToDiscoverArround: MinesWeeperCell[] = [cell]
-    const cellsDiscoverdArround: string[] = []
-    while (cellsToDiscoverArround.length) {
-        const cellToDiscover = cellsToDiscoverArround.shift()
-        const cellKey = `${cellToDiscover?.row}-${cellToDiscover?.column}`
-        if (!cellToDiscover || cellsDiscoverdArround.includes(cellKey)) continue
-        cellsDiscoverdArround.push(cellKey)
+    const cellsToRevealArround: MinesWeeperCell[] = [cell]
+    const cellsRevealedArround: string[] = []
+    while (cellsToRevealArround.length) {
+        const cellToReveal = cellsToRevealArround.shift()
+        const cellKey = `${cellToReveal?.row}-${cellToReveal?.column}`
+        if (!cellToReveal || cellsRevealedArround.includes(cellKey)) continue
+        cellsRevealedArround.push(cellKey)
 
-        const cellsArroundCellToDiscover = getCellsArroundCell(
-            cellToDiscover,
+        const cellsArroundCellToReveal = getCellsArroundCell(
+            cellToReveal,
             game.board
         )
-        cellsArroundCellToDiscover.forEach((cellArround) => {
+        cellsArroundCellToReveal.forEach((cellArround) => {
             cellArround.isRevealed = true
             if (cellArround.value === 0) {
-                cellsToDiscoverArround.push(cellArround)
+                cellsToRevealArround.push(cellArround)
             }
         })
     }

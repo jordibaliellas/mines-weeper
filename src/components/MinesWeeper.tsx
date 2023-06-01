@@ -49,6 +49,7 @@ export default function MinesWeeper() {
                             <Cell
                                 key={`${rowIndex}-${cellIndex}`}
                                 cell={cellValue}
+                                game={game}
                                 onCellClick={onCellClick}
                                 onRightClick={onRightClick}
                             />
