@@ -1,12 +1,14 @@
 import configurationSlice from './slices/configuration.slice'
 import { configureStore } from '@reduxjs/toolkit'
 import gameReducer from './slices/game.slice'
+import profileReducer from './slices/darkMode.slice'
 // ...
 
 export const store = configureStore({
     reducer: {
         game: gameReducer,
         configuration: configurationSlice,
+        profile: profileReducer,
     },
 })
 
