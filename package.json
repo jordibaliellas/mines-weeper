@@ -22,13 +22,16 @@
     "eslint": "8.41.0",
     "eslint-config-next": "13.4.4",
     "next": "13.4.4",
+    "ramda": "^0.29.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-hook-form": "^7.44.3",
     "react-redux": "^8.0.7",
     "styled-components": "^5.3.11",
     "typescript": "5.0.4"
   },
   "devDependencies": {
+    "@types/ramda": "^0.29.2",
     "sass": "^1.62.1"
   }
 }

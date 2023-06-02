@@ -1,13 +1,21 @@
+import {
+    selectConfiguration,
+    setConfiguration,
+} from '@/state/slices/configuration.slice'
+import { toPairs, values } from 'ramda'
+import { useAppDispatch, useAppSelector } from '@/state/hooks'
+import { useEffect, useState } from 'react'
+
 import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
+import CustomConfiguration from './CustomConfiguration'
 import { MinesweeperConfig } from '@/interfaces/minesweeper'
-import { setConfiguration } from '@/state/slices/configuration.slice'
-import { useAppDispatch } from '@/state/hooks'
 
 export enum Difficulties {
-    EASY = 'EASY',
-    MEDIUM = 'MEDIUM',
-    HARD = 'HARD',
+    EASY = 'Easy',
+    MEDIUM = 'Medium',
+    HARD = 'Hard',
+    CUSTOM = 'Custom',
 }
 
 export const configurationByDifficulty: Record<
@@ -29,30 +37,79 @@ export const configurationByDifficulty: Record<
         rows: 16,
         mines: 99,
     },
+    [Difficulties.CUSTOM]: {
+        columns: 0,
+        rows: 0,
+        mines: 0,
+    },
 }
 
-export default function BasicButtonGroup() {
+export function isSameConfiguration(
+    config: MinesweeperConfig,
+    difficulty: Difficulties
+): boolean {
+    const configByDifficulty = configurationByDifficulty[difficulty]
+
+    return toPairs(config).every(
+        ([key, value]) => configByDifficulty[key] === value
+    )
+}
+
+export default function Configuration() {
     const dispatch = useAppDispatch()
 
+    const [selectedDifficulty, setDifficulty] = useState(Difficulties.EASY)
+    const [opened, setOpened] = useState(false)
+    const configuration = useAppSelector(selectConfiguration)
+
+    useEffect(() => {
+        if (isSameConfiguration(configuration, selectedDifficulty)) return
+
+        const difficulty = values(Difficulties).find((difficulty) =>
+            isSameConfiguration(configuration, difficulty)
+        )
+
+        setDifficulty(difficulty || Difficulties.CUSTOM)
+    }, [configuration, selectedDifficulty])
+
     const onClickDifficulty = (difficulty: Difficulties) => {
-        dispatch(setConfiguration(configurationByDifficulty[difficulty]))
+        if (difficulty === Difficulties.CUSTOM) return handleCustomDifficulty()
+        dispatch(setConfiguration(configurationByDifficulty[difficulty]!))
+    }
+
+    const handleCustomDifficulty = () => {
+        setOpened(true)
+    }
+
+    const onCloseDialog = (config?: MinesweeperConfig) => {
+        if (config) dispatch(setConfiguration(config))
+        setOpened(false)
     }
 
     return (
-        <ButtonGroup
-            variant="contained"
-            aria-label="outlined primary button group"
-        >
-            <Button onClick={() => onClickDifficulty(Difficulties.EASY)}>
-                Easy
-            </Button>
-            <Button onClick={() => onClickDifficulty(Difficulties.MEDIUM)}>
-                Medium
-            </Button>
-            <Button onClick={() => onClickDifficulty(Difficulties.HARD)}>
-                Hard
-            </Button>
-            <Button>Custom</Button>
-        </ButtonGroup>
+        <>
+            <ButtonGroup
+                variant="outlined"
+                aria-label="outlined primary button group"
+            >
+                {values(Difficulties).map((difficulty) => (
+                    <Button
+                        key={difficulty}
+                        variant={
+                            difficulty === selectedDifficulty
+                                ? 'contained'
+                                : 'outlined'
+                        }
+                        onClick={() => onClickDifficulty(difficulty)}
+                    >
+                        {difficulty}
+                    </Button>
+                ))}
+            </ButtonGroup>
+            <CustomConfiguration
+                opened={opened}
+                onCloseDialog={onCloseDialog}
+            ></CustomConfiguration>
+        </>
     )
 }
